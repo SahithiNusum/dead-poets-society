@@ -1,7 +1,9 @@
 "use client"
 
-import { createContext, useState, useContext, useEffect } from "react"
+import { createContext, useContext, useState, useEffect } from "react"
 import axios from "axios"
+import { jwtDecode } from 'jwt-decode';
+// You may need to install this package
 
 const AuthContext = createContext()
 
@@ -11,28 +13,42 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null)
     const [loading, setLoading] = useState(true)
 
+    // Check for existing token on startup
     useEffect(() => {
-        // Check if user is logged in
-        const token = localStorage.getItem("token")
-        if (token) {
-            axios
-                .get("http://localhost:5000/api/users/me", {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                })
-                .then((res) => {
-                    setUser(res.data)
-                    setLoading(false)
-                })
-                .catch(() => {
+        const checkAuth = async () => {
+            const token = localStorage.getItem("token")
+
+            if (token) {
+                try {
+                    // Verify token is valid
+                    const decoded = jwtDecode(token)
+
+                    const currentTime = Date.now() / 1000
+
+                    if (decoded.exp < currentTime) {
+                        // Token expired
+                        localStorage.removeItem("token")
+                        setUser(null)
+                    } else {
+                        // Get user data
+                        const response = await axios.get("http://localhost:5000/api/users/me", {
+                            headers: {
+                                Authorization: `Bearer ${token}`,
+                            },
+                        })
+                        setUser(response.data)
+                    }
+                } catch (err) {
+                    console.error("Auth verification error:", err)
                     localStorage.removeItem("token")
                     setUser(null)
-                    setLoading(false)
-                })
-        } else {
+                }
+            }
+
             setLoading(false)
         }
+
+        checkAuth()
     }, [])
 
     const login = (token, userData) => {

@@ -19,7 +19,8 @@ const Profile = () => {
 
     const fetchUserPoems = async () => {
         try {
-            const response = await axios.get("http://localhost:5000/api/poems/user", {
+            // Use the correct endpoint with the user's ID
+            const response = await axios.get(`http://localhost:5000/api/poems/user/${user.id}`, {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem("token")}`,
                 },
@@ -63,10 +64,10 @@ const Profile = () => {
 
             // Update the poems list with the edited poem
             setUserPoems(userPoems.map((poem) => (poem._id === editingPoem ? response.data : poem)))
-
             setEditingPoem(null)
         } catch (err) {
             console.error("Error updating poem:", err)
+            alert("Failed to update poem. Please try again.")
         }
     }
 
@@ -74,6 +75,7 @@ const Profile = () => {
         if (!window.confirm("Are you sure you want to delete this poem?")) return
 
         try {
+            // Use the correct endpoint for poem deletion
             await axios.delete(`http://localhost:5000/api/poems/${poemId}`, {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -92,7 +94,8 @@ const Profile = () => {
         if (!window.confirm("Are you sure you want to delete this comment?")) return
 
         try {
-            await axios.delete(`http://localhost:5000/api/poems/${poemId}/comments/${commentId}`, {
+            // Use the correct endpoint for comment deletion
+            await axios.delete(`http://localhost:5000/api/poems/${poemId}/comment/${commentId}`, {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem("token")}`,
                 },

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import { FaHeart, FaComment, FaArrowLeft } from "react-icons/fa"
+import { FaHeart, FaRegHeart, FaComment, FaArrowLeft } from "react-icons/fa"
 import axios from "axios"
 import { useAuth } from "../context/AuthContext"
 
@@ -44,7 +44,9 @@ const UserProfile = () => {
             }
         }
 
-        fetchUserProfile()
+        if (userId) {
+            fetchUserProfile()
+        }
     }, [userId])
 
     const handleLike = async (poemId) => {
@@ -107,7 +109,7 @@ const UserProfile = () => {
                 ) : (
                     <div className="space-y-6">
                         {userPoems.map((poem) => (
-                            <div key={poem._id} className="bg-white shadow-md rounded-lg overflow-hidden">
+                            <div key={poem._id} className="bg-white shadow-md rounded-lg overflow-hidden border">
                                 <div className="p-6">
                                     <h3 className="text-xl font-bold mb-2">{poem.title}</h3>
                                     <div className="whitespace-pre-line mb-4 text-gray-700">{poem.content}</div>
@@ -117,7 +119,7 @@ const UserProfile = () => {
                                             onClick={() => handleLike(poem._id)}
                                             className="flex items-center space-x-1 hover:text-purple-600"
                                         >
-                                            {poem.isLiked ? <FaHeart className="text-red-500" /> : <FaHeart />}
+                                            {poem.isLiked ? <FaHeart className="text-red-500" /> : <FaRegHeart />}
                                             <span>{poem.likes?.length || 0}</span>
                                         </button>
 
@@ -130,42 +132,31 @@ const UserProfile = () => {
                                         </button>
                                     </div>
 
-                                    {poem.comments && poem.comments.length > 0 && (
-                                        <>
-                                            <button
-                                                onClick={() => toggleComments(poem._id)}
-                                                className="text-sm text-purple-600 hover:text-purple-800 mt-2 flex items-center"
-                                            >
-                                                {visibleComments[poem._id] ? "Hide comments" : "Show comments"}
-                                            </button>
-
-                                            {visibleComments[poem._id] && (
-                                                <div className="bg-gray-50 p-4 border-t mt-2">
-                                                    <h4 className="font-medium mb-2">Comments</h4>
-                                                    <div className="space-y-3">
-                                                        {poem.comments.map((comment) => (
-                                                            <div key={comment._id} className="flex">
-                                                                <div
-                                                                    className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 font-bold text-sm cursor-pointer"
-                                                                    onClick={() => navigate(`/user/${comment.author._id}`)}
-                                                                >
-                                                                    {comment.author.username.charAt(0).toUpperCase()}
-                                                                </div>
-                                                                <div className="ml-2 bg-white p-2 rounded-lg flex-1">
-                                                                    <p
-                                                                        className="text-sm font-medium cursor-pointer hover:text-purple-600"
-                                                                        onClick={() => navigate(`/user/${comment.author._id}`)}
-                                                                    >
-                                                                        {comment.author.username}
-                                                                    </p>
-                                                                    <p className="text-sm">{comment.content}</p>
-                                                                </div>
-                                                            </div>
-                                                        ))}
+                                    {poem.comments && poem.comments.length > 0 && visibleComments[poem._id] && (
+                                        <div className="bg-gray-50 p-4 border-t mt-4">
+                                            <h4 className="font-medium mb-2">Comments</h4>
+                                            <div className="space-y-3">
+                                                {poem.comments.map((comment) => (
+                                                    <div key={comment._id} className="flex">
+                                                        <div
+                                                            className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 font-bold text-sm cursor-pointer"
+                                                            onClick={() => navigate(`/user/${comment.author._id}`)}
+                                                        >
+                                                            {comment.author.username.charAt(0).toUpperCase()}
+                                                        </div>
+                                                        <div className="ml-2 bg-white p-2 rounded-lg flex-1">
+                                                            <p
+                                                                className="text-sm font-medium cursor-pointer hover:text-purple-600"
+                                                                onClick={() => navigate(`/user/${comment.author._id}`)}
+                                                            >
+                                                                {comment.author.username}
+                                                            </p>
+                                                            <p className="text-sm">{comment.content}</p>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            )}
-                                        </>
+                                                ))}
+                                            </div>
+                                        </div>
                                     )}
                                 </div>
                             </div>

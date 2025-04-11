@@ -3,18 +3,55 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { FaRss, FaUser, FaSignOutAlt, FaPen } from "react-icons/fa"
+import axios from "axios"
 import Feed from "./Feed"
 import Profile from "./Profile"
 import { useAuth } from "../context/AuthContext"
 
 const Home = () => {
     const [activeTab, setActiveTab] = useState("feed")
+    const [poemData, setPoemData] = useState({
+        title: "",
+        content: "",
+    })
+    const [submitting, setSubmitting] = useState(false)
+    const [error, setError] = useState("")
     const { logout } = useAuth()
     const navigate = useNavigate()
 
     const handleLogout = () => {
         logout()
         navigate("/login")
+    }
+
+    const handleChange = (e) => {
+        setPoemData({
+            ...poemData,
+            [e.target.id]: e.target.value,
+        })
+    }
+
+    const handleSubmit = async (e) => {
+        e.preventDefault()
+        setSubmitting(true)
+        setError("")
+
+        try {
+            await axios.post("http://localhost:5000/api/poems", poemData, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
+            })
+
+            // Reset form and go to feed
+            setPoemData({ title: "", content: "" })
+            setActiveTab("feed")
+        } catch (err) {
+            console.error("Error publishing poem:", err)
+            setError("Failed to publish poem. Please try again.")
+        } finally {
+            setSubmitting(false)
+        }
     }
 
     return (
@@ -78,7 +115,10 @@ const Home = () => {
                         {activeTab === "compose" && (
                             <div className="bg-white shadow-md rounded-lg p-6">
                                 <h2 className="text-xl font-bold mb-4">Compose a Poem</h2>
-                                <form>
+                                {error && (
+                                    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>
+                                )}
+                                <form onSubmit={handleSubmit}>
                                     <div className="mb-4">
                                         <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="title">
                                             Title
@@ -86,8 +126,11 @@ const Home = () => {
                                         <input
                                             type="text"
                                             id="title"
+                                            value={poemData.title}
+                                            onChange={handleChange}
                                             className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
                                             placeholder="Enter poem title"
+                                            required
                                         />
                                     </div>
                                     <div className="mb-4">
@@ -96,16 +139,20 @@ const Home = () => {
                                         </label>
                                         <textarea
                                             id="content"
+                                            value={poemData.content}
+                                            onChange={handleChange}
                                             rows="8"
                                             className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
                                             placeholder="Write your poem here..."
+                                            required
                                         ></textarea>
                                     </div>
                                     <button
                                         type="submit"
-                                        className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline transition duration-300"
+                                        disabled={submitting}
+                                        className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline transition duration-300 disabled:opacity-50"
                                     >
-                                        Publish Poem
+                                        {submitting ? "Publishing..." : "Publish Poem"}
                                     </button>
                                 </form>
                             </div>

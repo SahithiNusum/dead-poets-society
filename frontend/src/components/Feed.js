@@ -1,10 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 import { FaHeart, FaRegHeart, FaComment, FaTrash } from "react-icons/fa"
 import axios from "axios"
 import { useAuth } from "../context/AuthContext"
-import { useNavigate } from "react-router-dom"
 
 const Feed = () => {
     const [poems, setPoems] = useState([])
@@ -114,6 +114,7 @@ const Feed = () => {
             )
         } catch (err) {
             console.error("Error deleting comment:", err)
+            alert("Failed to delete comment. Please try again.")
         }
     }
 
@@ -122,6 +123,11 @@ const Feed = () => {
             ...prev,
             [poemId]: !prev[poemId],
         }))
+    }
+
+    const navigateToUserProfile = (userId) => {
+        // Navigate to user profile
+        navigate(`/user/${userId}`)
     }
 
     if (loading) return <div className="text-center py-8">Loading poems...</div>
@@ -142,14 +148,14 @@ const Feed = () => {
                             <div className="flex items-center mb-4">
                                 <div
                                     className="w-10 h-10 rounded-full bg-purple-200 flex items-center justify-center text-purple-700 font-bold cursor-pointer"
-                                    onClick={() => navigate(`/user/${poem.author._id}`)}
+                                    onClick={() => navigateToUserProfile(poem.author._id)}
                                 >
                                     {poem.author.username.charAt(0).toUpperCase()}
                                 </div>
                                 <div className="ml-3">
                                     <p
                                         className="font-medium cursor-pointer hover:text-purple-600"
-                                        onClick={() => navigate(`/user/${poem.author._id}`)}
+                                        onClick={() => navigateToUserProfile(poem.author._id)}
                                     >
                                         {poem.author.username}
                                     </p>
@@ -196,7 +202,7 @@ const Feed = () => {
                                                 <div key={comment._id} className="flex">
                                                     <div
                                                         className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 font-bold text-sm cursor-pointer"
-                                                        onClick={() => navigate(`/user/${comment.author._id}`)}
+                                                        onClick={() => navigateToUserProfile(comment.author._id)}
                                                     >
                                                         {comment.author.username.charAt(0).toUpperCase()}
                                                     </div>
@@ -204,7 +210,7 @@ const Feed = () => {
                                                         <div className="flex justify-between items-start">
                                                             <p
                                                                 className="text-sm font-medium cursor-pointer hover:text-purple-600"
-                                                                onClick={() => navigate(`/user/${comment.author._id}`)}
+                                                                onClick={() => navigateToUserProfile(comment.author._id)}
                                                             >
                                                                 {comment.author.username}
                                                             </p>

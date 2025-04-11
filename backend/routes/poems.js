@@ -1,35 +1,25 @@
 const express = require("express")
 const Poem = require("../models/Poem")
 const auth = require("../middleware/auth")
-const jwt = require("jsonwebtoken") // Import jwt
+const jwt = require("jsonwebtoken")
 
 const router = express.Router()
 
 // Get all poems
-router.get("/", async (req, res) => {
+router.get("/", auth, async (req, res) => {
     try {
         const poems = await Poem.find()
             .sort({ createdAt: -1 })
             .populate("author", "username")
             .populate("comments.author", "username")
 
-        // If user is authenticated, check if they liked each poem
-        if (req.headers.authorization) {
-            const token = req.headers.authorization.split(" ")[1]
-            if (token) {
-                try {
-                    const decoded = jwt.verify(token, process.env.JWT_SECRET || "secret")
-                    const userId = decoded.id
+        // Check if user liked each poem
+        const userId = req.user.id
 
-                    // Add isLiked field to each poem
-                    poems.forEach((poem) => {
-                        poem._doc.isLiked = poem.likes.some((like) => like.toString() === userId)
-                    })
-                } catch (err) {
-                    // Invalid token, continue without isLiked field
-                }
-            }
-        }
+        // Add isLiked field to each poem
+        poems.forEach((poem) => {
+            poem._doc.isLiked = poem.likes.some((like) => like.toString() === userId)
+        })
 
         res.json(poems)
     } catch (err) {
@@ -41,7 +31,33 @@ router.get("/", async (req, res) => {
 // Get poems by current user
 router.get("/user", auth, async (req, res) => {
     try {
-        const poems = await Poem.find({ author: req.user.id }).sort({ createdAt: -1 }).populate("author", "username")
+        const poems = await Poem.find({ author: req.user.id })
+            .sort({ createdAt: -1 })
+            .populate("author", "username")
+            .populate("comments.author", "username")
+
+        res.json(poems)
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({ message: "Server error" })
+    }
+})
+
+// Get poems by specific user
+router.get("/user/:userId", auth, async (req, res) => {
+    try {
+        const poems = await Poem.find({ author: req.params.userId })
+            .sort({ createdAt: -1 })
+            .populate("author", "username")
+            .populate("comments.author", "username")
+
+        // Check if current user liked each poem
+        const userId = req.user.id
+
+        // Add isLiked field to each poem
+        poems.forEach((poem) => {
+            poem._doc.isLiked = poem.likes.some((like) => like.toString() === userId)
+        })
 
         res.json(poems)
     } catch (err) {
@@ -115,7 +131,8 @@ router.delete("/:id", auth, async (req, res) => {
             return res.status(401).json({ message: "Not authorized" })
         }
 
-        await poem.remove()
+        // Use findByIdAndDelete instead of remove()
+        await Poem.findByIdAndDelete(req.params.id)
 
         res.json({ message: "Poem removed" })
     } catch (err) {
@@ -175,6 +192,38 @@ router.post("/:id/comment", auth, async (req, res) => {
         await addedComment.populate("author", "username")
 
         res.json(addedComment)
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({ message: "Server error" })
+    }
+})
+
+// Delete a comment
+router.delete("/:id/comment/:commentId", auth, async (req, res) => {
+    try {
+        const poem = await Poem.findById(req.params.id)
+        if (!poem) {
+            return res.status(404).json({ message: "Poem not found" })
+        }
+
+        // Find the comment
+        const comment = poem.comments.find((c) => c._id.toString() === req.params.commentId)
+
+        if (!comment) {
+            return res.status(404).json({ message: "Comment not found" })
+        }
+
+        // Check if user is the comment author or poem author
+        if (comment.author.toString() !== req.user.id && poem.author.toString() !== req.user.id) {
+            return res.status(401).json({ message: "Not authorized to delete this comment" })
+        }
+
+        // Remove the comment
+        poem.comments = poem.comments.filter((c) => c._id.toString() !== req.params.commentId)
+
+        await poem.save()
+
+        res.json({ message: "Comment removed" })
     } catch (err) {
         console.error(err)
         res.status(500).json({ message: "Server error" })

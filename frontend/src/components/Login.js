@@ -23,8 +23,10 @@ const Login = () => {
 
     const onSubmit = async (e) => {
         e.preventDefault()
+        setError("") // Clear previous errors
 
         try {
+            console.log("Attempting login with:", { username, password })
             const response = await axios.post("http://localhost:5000/api/users/login", {
                 username,
                 password,
@@ -35,7 +37,11 @@ const Login = () => {
                 navigate("/")
             }
         } catch (err) {
-            setError(err.response?.data?.message || "Login failed")
+            console.error("Login error:", err)
+            setError(
+                err.response?.data?.message ||
+                `Login failed: ${err.message || "Unknown error"}`
+            )
         }
     }
 

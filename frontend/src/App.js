@@ -1,11 +1,8 @@
-
 "use client"
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom"
 import Login from "./components/Login"
 import Register from "./components/Register"
 import Home from "./components/Home"
-import Feed from "./components/Feed"
-import Profile from "./components/Profile"
 import UserProfile from "./components/UserProfile"
 import { AuthProvider, useAuth } from "./context/AuthContext"
 import "./App.css"
@@ -20,7 +17,7 @@ const ProtectedRoute = ({ children }) => {
   }
 
   if (!user) {
-    return <Navigate to="/login" />
+    return <Navigate to="/login" replace />
   }
 
   return children
@@ -43,22 +40,6 @@ function App() {
               }
             />
             <Route
-              path="/feed"
-              element={
-                <ProtectedRoute>
-                  <Feed />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/profile"
-              element={
-                <ProtectedRoute>
-                  <Profile />
-                </ProtectedRoute>
-              }
-            />
-            <Route
               path="/user/:userId"
               element={
                 <ProtectedRoute>
@@ -66,7 +47,8 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route path="*" element={<Navigate to="/" />} />
+            {/* Add a catch-all route that redirects to login */}
+            <Route path="*" element={<Navigate to="/login" replace />} />
           </Routes>
         </div>
       </Router>
